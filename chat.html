@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat - SVU Alumni Network</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="dashboard-body" style="height: 100vh; overflow: hidden; display: flex; flex-direction: column;">
+    <!-- Top Navigation Bar -->
+    <nav class="navbar" id="top-navbar">
+        <div class="nav-brand" style="display: flex; align-items: center; gap: 12px;">
+            <img src="image_d00988.jpg" alt="SVU Logo" style="height: 45px; width: 45px; border-radius: 50%; object-fit: cover;">
+            <h1 style="margin: 0; font-size: 1.5rem;">SVU Alumni Network</h1>
+        </div>
+        <div class="nav-links">
+            <a href="dashboard.html">Home</a>
+            <a href="chat.html" class="active">Chat</a>
+            <a href="about.html">About</a>
+            <a href="profile.html" class="profile-icon" title="Profile" id="nav-profile-btn" style="padding: 0; overflow: hidden;">
+                <img id="nav-avatar" src="" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+                <svg id="nav-svg" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </a>
+        </div>
+    </nav>
+    
+    <main class="chat-container">
+        <!-- Left Sidebar: Search & User List -->
+        <div class="chat-sidebar">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Search username...">
+                <button id="search-btn">Search</button>
+            </div>
+            
+            <!-- Search Results (Hidden by default) -->
+            <div id="search-results" class="user-list" style="display: none;">
+                <!-- Found users will appear here -->
+            </div>
+
+            <!-- Recent Chats List (WhatsApp Style) -->
+            <div id="recent-chats-container" style="display: flex; flex-direction: column; flex-grow: 1; overflow: hidden;">
+                <h4 style="margin-bottom: 10px; color: #555; font-size: 0.9rem; padding: 0 5px;">Recent Chats</h4>
+                <div id="recent-chats-list" class="user-list">
+                    <p style="text-align: center; color: #888; font-size: 0.9rem; margin-top: 20px;">Loading chats...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Area: Active Chat Window -->
+        <div class="chat-window">
+            <div class="chat-header" id="chat-header">
+                <h3>Select a user to chat</h3>
+            </div>
+            
+            <div class="chat-messages" id="chat-messages">
+                <!-- Messages will appear here -->
+            </div>
+
+            <form class="chat-input-area" id="chat-form" style="display: none;">
+                <div class="chat-input-wrapper">
+                    <input type="text" id="message-input" placeholder="Type a message..." required autocomplete="off">
+                    <button type="submit" class="send-icon-btn" title="Send">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="transform: translateX(-1px);"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- User Profile Details Modal -->
+    <div id="user-profile-modal" class="modal hidden">
+        <div class="modal-content profile-modal-content">
+            <span class="close-btn" onclick="closeModal('user-profile-modal')">&times;</span>
+            <div style="text-align: center;">
+                <img id="up-modal-avatar" src="" alt="Avatar">
+                <h2 id="up-modal-name">Name</h2>
+                <span id="up-modal-role" class="badge">Role</span>
+            </div>
+            <div class="user-modal-details">
+                <p><strong>Username:</strong> @<span id="up-modal-username"></span></p>
+                <div id="up-modal-alumni-details" class="hidden">
+                    <p><strong>Company:</strong> <span id="up-modal-company"></span></p>
+                    <p><strong>Designation:</strong> <span id="up-modal-designation"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Supabase
+        const SUPABASE_URL = 'https://nklrpamkpcmrdyeqnjic.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_jbRlcZEhvMcvOnSGOWrzyw_emTnaE9w';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let currentChatUser = null;
+
+        // Initialize user session
+        async function initAuth() {
+            const { data: { user }, error } = await supabaseClient.auth.getUser();
+            if (error || !user) {
+                window.location.href = 'index.html';
+                return;
+            }
+            currentUser = user;
+
+            // Load nav avatar
+            const { data: profile } = await supabaseClient.from('profiles').select('avatar_url').eq('id', user.id).single();
+            if (profile && profile.avatar_url) {
+                document.getElementById('nav-avatar').src = profile.avatar_url;
+                document.getElementById('nav-avatar').style.display = 'block';
+                document.getElementById('nav-svg').style.display = 'none';
+                document.getElementById('nav-profile-btn').style.backgroundColor = 'transparent';
+            }
+
+            await loadRecentChats();
+            listenForNewMessages();
+
+            // Auto-open chat if redirected from dashboard
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetUsername = urlParams.get('user');
+            
+            if (targetUsername) {
+                const { data: targetUser, error: targetError } = await supabaseClient
+                    .from('profiles')
+                    .select('id, full_name, username, avatar_url, role, company, designation')
+                    .eq('username', targetUsername)
+                    .single();
+                
+                if (targetUser && !targetError && targetUser.id !== currentUser.id) {
+                    await openChat(targetUser);
+                }
+                
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+
+        // ==========================================
+        // 1. RECENT CHATS LOGIC
+        // ==========================================
+        async function loadRecentChats() {
+            const recentContainer = document.getElementById('recent-chats-list');
+            
+            const { data: messages, error } = await supabaseClient
+                .from('messages')
+                .select('sender_id, receiver_id')
+                .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
+                .order('created_at', { ascending: false });
+
+            if (error || !messages) {
+                recentContainer.innerHTML = '<p style="text-align: center; color: #888;">Error loading chats.</p>';
+                return;
+            }
+
+            const uniqueUserIds = new Set();
+            messages.forEach(msg => {
+                if (msg.sender_id !== currentUser.id) uniqueUserIds.add(msg.sender_id);
+                if (msg.receiver_id !== currentUser.id) uniqueUserIds.add(msg.receiver_id);
+            });
+
+            if (uniqueUserIds.size === 0) {
+                recentContainer.innerHTML = '<p style="text-align: center; color: #888; font-size: 0.9rem; margin-top: 20px;">No recent chats. Search above to start one!</p>';
+                return;
+            }
+
+            // Fetch extra profile data for modal
+            const { data: profiles, error: profilesError } = await supabaseClient
+                .from('profiles')
+                .select('id, full_name, username, avatar_url, role, company, designation')
+                .in('id', Array.from(uniqueUserIds));
+
+            if (profilesError) return;
+
+            recentContainer.innerHTML = '';
+
+            const orderedProfiles = Array.from(uniqueUserIds).map(id => profiles.find(p => p.id === id)).filter(Boolean);
+
+            orderedProfiles.forEach(user => {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'user-list-item';
+                userDiv.innerHTML = `
+                    <img src="${user.avatar_url || 'https://via.placeholder.com/40'}" alt="Avatar">
+                    <div>
+                        <strong>${user.full_name}</strong>
+                        <span>@${user.username}</span>
+                    </div>
+                `;
+                userDiv.onclick = () => openChat(user);
+                recentContainer.appendChild(userDiv);
+            });
+        }
+
+        // ==========================================
+        // 2. SEARCH LOGIC
+        // ==========================================
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
+        const recentChatsContainer = document.getElementById('recent-chats-container');
+
+        searchInput.addEventListener('input', (e) => {
+            if (e.target.value.trim() === '') {
+                searchResults.style.display = 'none';
+                recentChatsContainer.style.display = 'flex';
+            }
+        });
+
+        document.getElementById('search-btn').addEventListener('click', async () => {
+            const username = searchInput.value.trim();
+            if (!username) return;
+
+            recentChatsContainer.style.display = 'none';
+            searchResults.style.display = 'block';
+
+            // Fetch extra profile data for modal
+            const { data: users, error } = await supabaseClient
+                .from('profiles')
+                .select('id, full_name, username, avatar_url, role, company, designation')
+                .ilike('username', `%${username}%`)
+                .neq('id', currentUser.id);
+
+            searchResults.innerHTML = '';
+
+            if (error || users.length === 0) {
+                searchResults.innerHTML = '<p style="text-align: center; color: #888; font-size: 0.9rem; margin-top: 10px;">No users found.</p>';
+                return;
+            }
+
+            users.forEach(user => {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'user-list-item';
+                userDiv.innerHTML = `
+                    <img src="${user.avatar_url || 'https://via.placeholder.com/40'}" alt="Avatar">
+                    <div>
+                        <strong>${user.full_name}</strong>
+                        <span>@${user.username}</span>
+                    </div>
+                `;
+                userDiv.onclick = () => {
+                    openChat(user);
+                    searchInput.value = '';
+                    searchResults.style.display = 'none';
+                    recentChatsContainer.style.display = 'flex';
+                };
+                searchResults.appendChild(userDiv);
+            });
+        });
+
+        // ==========================================
+        // 3. MESSAGING LOGIC
+        // ==========================================
+        async function openChat(user) {
+            currentChatUser = user;
+            
+            // Clickable user area that triggers viewUserProfile()
+            document.getElementById('chat-header').innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 5px; border-radius: 8px; transition: background-color 0.2s;" onclick="viewUserProfile()" onmouseover="this.style.backgroundColor='#e9ecef'" onmouseout="this.style.backgroundColor='transparent'">
+                    <img src="${user.avatar_url || 'https://via.placeholder.com/40'}" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover;">
+                    <h3 style="margin: 0; font-size: 1.1rem;">${user.full_name} <span style="color: #666; font-size: 0.9rem; font-weight: normal;">(@${user.username})</span></h3>
+                </div>
+            `;
+            document.getElementById('chat-form').style.display = 'flex';
+            
+            await loadMessages();
+        }
+
+        async function loadMessages() {
+            const { data: messages, error } = await supabaseClient
+                .from('messages')
+                .select('*')
+                .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${currentChatUser.id}),and(sender_id.eq.${currentChatUser.id},receiver_id.eq.${currentUser.id})`)
+                .order('created_at', { ascending: true });
+
+            const messagesContainer = document.getElementById('chat-messages');
+            messagesContainer.innerHTML = '';
+
+            if (messages) {
+                messages.forEach(msg => appendMessage(msg));
+            }
+            scrollToBottom();
+        }
+
+        function appendMessage(msg) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const isMine = msg.sender_id === currentUser.id;
+            
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${isMine ? 'message-mine' : 'message-theirs'}`;
+            msgDiv.innerText = msg.content;
+            
+            messagesContainer.appendChild(msgDiv);
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('chat-messages');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        document.getElementById('chat-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('message-input');
+            const content = input.value.trim();
+            if (!content || !currentChatUser) return;
+
+            input.value = ''; 
+
+            const { error } = await supabaseClient
+                .from('messages')
+                .insert([
+                    { sender_id: currentUser.id, receiver_id: currentChatUser.id, content: content }
+                ]);
+
+            if (error) {
+                alert("Failed to send message: " + error.message);
+            } else {
+                loadRecentChats();
+            }
+        });
+
+        function listenForNewMessages() {
+            supabaseClient
+                .channel('realtime:messages')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+                    const newMsg = payload.new;
+                    
+                    if (newMsg.sender_id === currentUser.id || newMsg.receiver_id === currentUser.id) {
+                        loadRecentChats();
+                    }
+
+                    if (currentChatUser && 
+                       ((newMsg.sender_id === currentUser.id && newMsg.receiver_id === currentChatUser.id) || 
+                        (newMsg.sender_id === currentChatUser.id && newMsg.receiver_id === currentUser.id))) {
+                        
+                        appendMessage(newMsg);
+                        scrollToBottom();
+                    }
+                })
+                .subscribe();
+        }
+
+        // ==========================================
+        // 4. USER PROFILE MODAL
+        // ==========================================
+        function viewUserProfile() {
+            if (!currentChatUser) return;
+            const user = currentChatUser;
+
+            document.getElementById('up-modal-avatar').src = user.avatar_url || 'https://via.placeholder.com/100';
+            document.getElementById('up-modal-name').innerText = user.full_name;
+            document.getElementById('up-modal-role').innerText = user.role || 'User';
+            document.getElementById('up-modal-username').innerText = user.username;
+
+            if (user.role === 'Alumni' && (user.company || user.designation)) {
+                document.getElementById('up-modal-alumni-details').classList.remove('hidden');
+                document.getElementById('up-modal-company').innerText = user.company || 'N/A';
+                document.getElementById('up-modal-designation').innerText = user.designation || 'N/A';
+            } else {
+                document.getElementById('up-modal-alumni-details').classList.add('hidden');
+            }
+
+            document.getElementById('user-profile-modal').classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        initAuth();
+    </script>
+</body>
+</html>

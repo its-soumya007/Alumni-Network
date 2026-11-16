@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SVU Alumni Network</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="dashboard-body">
+    <!-- Top Navigation Bar -->
+    <nav class="navbar" id="top-navbar">
+        <div class="nav-brand" style="display: flex; align-items: center; gap: 12px;">
+            <img src="image_d00988.jpg" alt="SVU Logo" style="height: 45px; width: 45px; border-radius: 50%; object-fit: cover;">
+            <h1 style="margin: 0; font-size: 1.5rem;">SVU Alumni Network</h1>
+        </div>
+        <div class="nav-links">
+            <a href="dashboard.html" class="active">Home</a>
+            <a href="chat.html">Chat</a>
+            <a href="about.html">About</a>
+            <a href="profile.html" class="profile-icon" title="Profile" id="nav-profile-btn" style="padding: 0; overflow: hidden;">
+                <img id="nav-avatar" src="" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+                <svg id="nav-svg" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Dashboard Content -->
+    <main class="dashboard-container">
+        
+        <!-- Action Bar (No tile, Sticky, hides on scroll down) -->
+        <div class="action-bar" id="action-bar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            
+            <!-- Left Side: Create Post & Filters -->
+            <div class="action-left" style="display: flex; align-items: center; gap: 15px;">
+                <!-- Create Post Dropdown (Extreme Left) -->
+                <div class="dropdown" id="create-post-dropdown" style="display: none;">
+                    <button class="btn-primary dropbtn">Create Post ▾</button>
+                    <div class="dropdown-content">
+                        <a href="#" onclick="openModal('Reference')">Reference</a>
+                        <a href="#" onclick="openModal('Review')">Review</a>
+                    </div>
+                </div>
+
+                <!-- Filter Buttons -->
+                <div style="display: flex; gap: 10px;">
+                    <button class="filter-btn active" onclick="filterPosts('All')">All</button>
+                    <button class="filter-btn" onclick="filterPosts('Review')">Reviews</button>
+                    <button class="filter-btn" onclick="filterPosts('Reference')">References</button>
+                </div>
+            </div>
+
+            <!-- Right Side: Sort By & Search Bar -->
+            <div class="action-right" style="display: flex; align-items: center; gap: 10px;">
+                <!-- Sort By (Left of Search) -->
+                <select id="sort-select" onchange="fetchPosts()" class="post-sort-select">
+                    <option value="newest">Sort by: Newest</option>
+                    <option value="oldest">Sort by: Oldest</option>
+                </select>
+                
+                <!-- Search Bar (Extreme Right) -->
+                <input type="text" id="post-search-input" placeholder="Search headings..." oninput="fetchPosts()" class="post-search-bar">
+            </div>
+        </div>
+        
+        <!-- Feed Container (1 column layout) -->
+        <div class="feed-grid" id="posts-feed">
+            <p style="text-align: center; color: #888;">Loading posts...</p>
+        </div>
+    </main>
+
+    <!-- Create Post Modal -->
+    <div id="post-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('post-modal')">&times;</span>
+            <h2 id="modal-title">Create Post</h2>
+            <form id="create-post-form">
+                <input type="hidden" id="post-type-input">
+                
+                <div class="form-group">
+                    <label>Upload Picture</label>
+                    <input type="file" id="post-image" accept="image/*">
+                </div>
+
+                <div class="form-group">
+                    <label>Heading</label>
+                    <input type="text" id="post-heading" placeholder="Enter title..." required>
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="post-description" rows="5" placeholder="Write your details here..." required></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 10px;">Post</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Profile Details Modal -->
+    <div id="user-profile-modal" class="modal hidden">
+        <div class="modal-content profile-modal-content">
+            <span class="close-btn" onclick="closeModal('user-profile-modal')">&times;</span>
+            <div style="text-align: center;">
+                <img id="up-modal-avatar" src="" alt="Avatar">
+                <h2 id="up-modal-name">Name</h2>
+                <span id="up-modal-role" class="badge">Role</span>
+            </div>
+            <div class="user-modal-details">
+                <p><strong>Username:</strong> @<span id="up-modal-username"></span></p>
+                <div id="up-modal-alumni-details" class="hidden">
+                    <p><strong>Company:</strong> <span id="up-modal-company"></span></p>
+                    <p><strong>Designation:</strong> <span id="up-modal-designation"></span></p>
+                </div>
+            </div>
+            <button class="btn-primary" id="up-modal-chat-btn" style="width: 100%; margin-top: 15px;">Message User</button>
+        </div>
+    </div>
+
+    <script>
+        // === Scroll Hide/Show Logic ===
+        let lastScrollY = window.scrollY;
+        const navbar = document.getElementById('top-navbar');
+        const actionBar = document.getElementById('action-bar');
+
+        window.addEventListener('scroll', () => {
+            const currentScrollY = window.scrollY;
+            
+            // If scrolling down past 80px, hide both bars by translating them up
+            if (currentScrollY > lastScrollY && currentScrollY > 80) {
+                navbar.style.transform = 'translateY(-100%)';
+                actionBar.style.transform = 'translateY(-150px)';
+            } else {
+                // If scrolling up, show both bars
+                navbar.style.transform = 'translateY(0)';
+                actionBar.style.transform = 'translateY(0)';
+            }
+            lastScrollY = currentScrollY;
+        });
+
+        // Initialize Supabase
+        const SUPABASE_URL = 'https://nklrpamkpcmrdyeqnjic.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_jbRlcZEhvMcvOnSGOWrzyw_emTnaE9w';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let userProfile = null;
+        let currentFilter = 'All';
+        let loadedPosts = [];
+
+        async function initDashboard() {
+            const { data: { user }, error } = await supabaseClient.auth.getUser();
+            if (error || !user) {
+                window.location.href = 'index.html';
+                return;
+            }
+            currentUser = user;
+
+            const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
+            if (profile) {
+                userProfile = profile;
+                if (profile.avatar_url) {
+                    document.getElementById('nav-avatar').src = profile.avatar_url;
+                    document.getElementById('nav-avatar').style.display = 'block';
+                    document.getElementById('nav-svg').style.display = 'none';
+                    document.getElementById('nav-profile-btn').style.backgroundColor = 'transparent';
+                }
+                
+                if (profile.role === 'Alumni') {
+                    document.getElementById('create-post-dropdown').style.display = 'inline-block';
+                }
+            }
+
+            fetchPosts();
+        }
+
+        async function fetchPosts() {
+            const sortOrder = document.getElementById('sort-select').value;
+            const isAscending = sortOrder === 'oldest';
+            const searchQuery = document.getElementById('post-search-input').value.trim();
+
+            let query = supabaseClient
+                .from('posts')
+                .select(`*, profiles!posts_author_id_fkey(id, full_name, username, avatar_url, role, company, designation), post_likes(user_id)`)
+                .order('created_at', { ascending: isAscending });
+
+            if (currentFilter !== 'All') {
+                query = query.eq('post_type', currentFilter);
+            }
+
+            if (searchQuery) {
+                query = query.ilike('heading', `%${searchQuery}%`);
+            }
+
+            const { data: posts, error } = await query;
+            const feed = document.getElementById('posts-feed');
+            feed.innerHTML = '';
+
+            if (error) {
+                console.error(error);
+                feed.innerHTML = `<p style="text-align: center; color: red;">Database Error: ${error.message}</p>`;
+                return;
+            }
+
+            if (!posts || posts.length === 0) {
+                feed.innerHTML = '<p style="text-align: center; color: #888;">No posts available.</p>';
+                return;
+            }
+
+            loadedPosts = posts;
+
+            posts.forEach(post => {
+                const author = post.profiles;
+                const likesCount = post.post_likes.length;
+                const hasLiked = post.post_likes.some(like => like.user_id === currentUser.id);
+
+                const postImageHTML = post.image_url 
+                    ? `<img src="${post.image_url}" class="post-img" alt="Post Image">` 
+                    : `<div class="post-img-placeholder">No Image</div>`;
+
+                const card = document.createElement('div');
+                card.className = 'post-card tile';
+                card.innerHTML = `
+                    <div class="post-left">
+                        ${postImageHTML}
+                    </div>
+                    <div class="post-right">
+                        <div class="post-header-info clickable-user" onclick="viewUserProfile('${post.id}')">
+                            <img src="${author.avatar_url || 'https://via.placeholder.com/30'}" class="post-avatar">
+                            <span><strong class="hover-underline">${author.full_name}</strong> • ${post.post_type}</span>
+                        </div>
+                        <h3 class="post-heading">${post.heading}</h3>
+                        <div class="post-description-container">
+                            <p class="post-desc short-desc" id="desc-${post.id}">${post.description}</p>
+                            ${post.description.length > 150 ? `<button class="extend-btn" onclick="toggleDesc('${post.id}', this)">Extend</button>` : ''}
+                        </div>
+                        
+                        <div class="post-actions">
+                            <button class="interaction-btn ${hasLiked ? 'liked' : ''}" onclick="toggleLike('${post.id}', ${hasLiked})">
+                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="${hasLiked ? 'currentColor' : 'none'}" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                                <span>${likesCount}</span>
+                            </button>
+                            
+                            <button class="interaction-btn chat-interaction" onclick="startChat('${author.username}')">
+                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                                <span>Chat</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                feed.appendChild(card);
+            });
+        }
+
+        async function toggleLike(postId, currentlyLiked) {
+            if (currentlyLiked) {
+                await supabaseClient.from('post_likes').delete().match({ post_id: postId, user_id: currentUser.id });
+            } else {
+                await supabaseClient.from('post_likes').insert([{ post_id: postId, user_id: currentUser.id }]);
+            }
+            fetchPosts(); 
+        }
+
+        function startChat(username) {
+            window.location.href = `chat.html?user=${encodeURIComponent(username)}`;
+        }
+
+        function viewUserProfile(postId) {
+            const post = loadedPosts.find(p => p.id === postId);
+            if (!post) return;
+            const user = post.profiles;
+
+            document.getElementById('up-modal-avatar').src = user.avatar_url || 'https://via.placeholder.com/100';
+            document.getElementById('up-modal-name').innerText = user.full_name;
+            document.getElementById('up-modal-role').innerText = user.role;
+            document.getElementById('up-modal-username').innerText = user.username;
+
+            if (user.role === 'Alumni' && (user.company || user.designation)) {
+                document.getElementById('up-modal-alumni-details').classList.remove('hidden');
+                document.getElementById('up-modal-company').innerText = user.company || 'N/A';
+                document.getElementById('up-modal-designation').innerText = user.designation || 'N/A';
+            } else {
+                document.getElementById('up-modal-alumni-details').classList.add('hidden');
+            }
+
+            document.getElementById('up-modal-chat-btn').onclick = () => startChat(user.username);
+            document.getElementById('user-profile-modal').classList.remove('hidden');
+        }
+
+        function openModal(type) {
+            document.getElementById('post-modal').classList.remove('hidden');
+            document.getElementById('modal-title').innerText = `Create ${type}`;
+            document.getElementById('post-type-input').value = type;
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            if (modalId === 'post-modal') {
+                document.getElementById('create-post-form').reset();
+            }
+        }
+
+        function filterPosts(type) {
+            currentFilter = type;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.innerText.includes(type) || (type==='All' && btn.innerText==='All')) {
+                    btn.classList.add('active');
+                }
+            });
+            fetchPosts();
+        }
+
+        function toggleDesc(id, btn) {
+            const descP = document.getElementById(`desc-${id}`);
+            if (descP.classList.contains('short-desc')) {
+                descP.classList.remove('short-desc');
+                btn.innerText = 'Show Less';
+            } else {
+                descP.classList.add('short-desc');
+                btn.innerText = 'Extend';
+            }
+        }
+
+        document.getElementById('create-post-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const type = document.getElementById('post-type-input').value;
+            const heading = document.getElementById('post-heading').value;
+            const description = document.getElementById('post-description').value;
+            const fileInput = document.getElementById('post-image');
+            
+            let imageUrl = null;
+
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}.${fileExt}`;
+
+                const { error: uploadError } = await supabaseClient.storage
+                    .from('post_images')
+                    .upload(fileName, file);
+
+                if (uploadError) {
+                    alert("Image upload failed: " + uploadError.message);
+                    return;
+                }
+
+                const { data: publicUrlData } = supabaseClient.storage
+                    .from('post_images')
+                    .getPublicUrl(fileName);
+                imageUrl = publicUrlData.publicUrl;
+            }
+
+            const { error: dbError } = await supabaseClient
+                .from('posts')
+                .insert([{
+                    author_id: currentUser.id,
+                    post_type: type,
+                    heading: heading,
+                    description: description,
+                    image_url: imageUrl
+                }]);
+
+            if (dbError) {
+                alert("Failed to create post: " + dbError.message);
+            } else {
+                closeModal('post-modal');
+                fetchPosts();
+            }
+        });
+
+        initDashboard();
+    </script>
+</body>
+</html>
