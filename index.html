@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - SVU Alumni Network Connect</title>
+    <title>Dashboard - SVU Alumni Network</title>
     <link rel="stylesheet" href="style.css">
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -13,10 +13,10 @@
     <nav class="navbar" id="top-navbar">
         <div class="nav-brand" style="display: flex; align-items: center; gap: 12px;">
             <img src="image_d00988.jpg" alt="SVU Logo" style="height: 45px; width: 45px; border-radius: 50%; object-fit: cover;">
-            <h1 style="margin: 0; font-size: 1.5rem;">SVU Alumni Network Connect</h1>
+            <h1 style="margin: 0; font-size: 1.5rem;">SVU Alumni Network</h1>
         </div>
         <div class="nav-links">
-            <a href="dashboard.html" class="active">Home</a>
+            <a href="index.html" class="active">Home</a>
             <a href="chat.html">Chat</a>
             <a href="about.html">About</a>
             <a href="profile.html" class="profile-icon" title="Profile" id="nav-profile-btn" style="padding: 0; overflow: hidden;">
@@ -149,29 +149,42 @@
         let currentFilter = 'All';
         let loadedPosts = [];
 
+        // Initialize User Session
         async function initDashboard() {
             const { data: { user }, error } = await supabaseClient.auth.getUser();
+            
             if (error || !user) {
-                window.location.href = 'index.html';
-                return;
-            }
-            currentUser = user;
-
-            const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
-            if (profile) {
-                userProfile = profile;
-                if (profile.avatar_url) {
-                    document.getElementById('nav-avatar').src = profile.avatar_url;
-                    document.getElementById('nav-avatar').style.display = 'block';
-                    document.getElementById('nav-svg').style.display = 'none';
-                    document.getElementById('nav-profile-btn').style.backgroundColor = 'transparent';
-                }
+                // User is NOT logged in (Guest Mode)
+                currentUser = null;
                 
-                if (profile.role === 'Alumni') {
-                    document.getElementById('create-post-dropdown').style.display = 'inline-block';
+                // Change the Profile Icon into a "Login" button
+                const profileBtn = document.getElementById('nav-profile-btn');
+                profileBtn.href = 'login.html';
+                profileBtn.innerHTML = '<span style="font-size: 0.95rem; font-weight: bold; padding: 0 15px; color: #00d2ff;">Login</span>';
+                profileBtn.style.width = 'auto';
+                profileBtn.style.borderRadius = '20px';
+                profileBtn.style.border = '1px solid rgba(0, 210, 255, 0.5)';
+            } else {
+                // User IS logged in
+                currentUser = user;
+                const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
+                
+                if (profile) {
+                    userProfile = profile;
+                    if (profile.avatar_url) {
+                        document.getElementById('nav-avatar').src = profile.avatar_url;
+                        document.getElementById('nav-avatar').style.display = 'block';
+                        document.getElementById('nav-svg').style.display = 'none';
+                        document.getElementById('nav-profile-btn').style.backgroundColor = 'transparent';
+                    }
+                    
+                    if (profile.role === 'Alumni') {
+                        document.getElementById('create-post-dropdown').style.display = 'inline-block';
+                    }
                 }
             }
 
+            // Fetch posts for everyone (guests and logged-in users)
             fetchPosts();
         }
 
@@ -213,7 +226,9 @@
             posts.forEach(post => {
                 const author = post.profiles;
                 const likesCount = post.post_likes.length;
-                const hasLiked = post.post_likes.some(like => like.user_id === currentUser.id);
+                
+                // Safely check if currentUser exists before checking likes
+                const hasLiked = currentUser ? post.post_likes.some(like => like.user_id === currentUser.id) : false;
 
                 const postImageHTML = post.image_url 
                     ? `<img src="${post.image_url}" class="post-img" alt="Post Image">` 
@@ -254,6 +269,12 @@
         }
 
         async function toggleLike(postId, currentlyLiked) {
+            // Require login to like
+            if (!currentUser) {
+                window.location.href = 'login.html';
+                return;
+            }
+
             if (currentlyLiked) {
                 await supabaseClient.from('post_likes').delete().match({ post_id: postId, user_id: currentUser.id });
             } else {
@@ -263,6 +284,11 @@
         }
 
         function startChat(username) {
+            // Require login to chat
+            if (!currentUser) {
+                window.location.href = 'login.html';
+                return;
+            }
             window.location.href = `chat.html?user=${encodeURIComponent(username)}`;
         }
 
