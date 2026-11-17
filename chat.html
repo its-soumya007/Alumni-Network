@@ -15,7 +15,7 @@
             <h1 style="margin: 0; font-size: 1.5rem;">SVU Alumni Network</h1>
         </div>
         <div class="nav-links">
-            <a href="dashboard.html">Home</a>
+            <a href="index.html">Home</a>
             <a href="chat.html" class="active">Chat</a>
             <a href="about.html">About</a>
             <a href="profile.html" class="profile-icon" title="Profile" id="nav-profile-btn" style="padding: 0; overflow: hidden;">
@@ -100,7 +100,7 @@
         async function initAuth() {
             const { data: { user }, error } = await supabaseClient.auth.getUser();
             if (error || !user) {
-                window.location.href = 'index.html';
+                window.location.href = 'login.html';
                 return;
             }
             currentUser = user;
