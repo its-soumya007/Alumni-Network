@@ -16,7 +16,7 @@
             <h1 style="margin: 0; font-size: 1.5rem;">SVU Alumni Network</h1>
         </div>
         <div class="nav-links">
-            <a href="dashboard.html">Home</a>
+            <a href="index.html" class="active">Home</a>
             <a href="chat.html">Chat</a>
             <a href="about.html">About</a>
             <a href="profile.html" class="active profile-icon" title="Profile" id="nav-profile-btn" style="padding: 0; overflow: hidden; background-color: transparent;">
@@ -100,7 +100,7 @@
             
             // If not logged in, boot them out using replace()
             if (error || !user) {
-                window.location.replace('index.html');
+                window.location.replace('login.html');
                 return;
             }
             currentUser = user;
