@@ -126,6 +126,6 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
         alert("Login failed: " + error.message);
     } else {
         // Redirect to dashboard page here
-        window.location.href = 'dashboard.html';
+        window.location.href = 'index.html';
     }
 });
