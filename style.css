@@ -75,15 +75,94 @@ a {
 /* --- Dashboard & Navigation Styles --- */
 
 .dashboard-body {
-    display: block; /* Overrides the flex centering from the login page */
-    background-color: #f4f7f6;
+    display: block; 
+    background-color: #02040a; /* Deep space black */
+    /* Generates a field of static stars using radial gradients */
+    background-image: 
+        radial-gradient(1px 1px at 25px 5px, white, rgba(255,255,255,0)),
+        radial-gradient(1.5px 1.5px at 50px 250px, white, rgba(255,255,255,0)),
+        radial-gradient(1px 1px at 90px 80px, white, rgba(255,255,255,0)),
+        radial-gradient(2px 2px at 130px 180px, white, rgba(255,255,255,0)),
+        radial-gradient(1px 1px at 170px 100px, white, rgba(255,255,255,0)),
+        radial-gradient(1.5px 1.5px at 200px 30px, white, rgba(255,255,255,0)),
+        radial-gradient(1px 1px at 250px 200px, white, rgba(255,255,255,0)),
+        radial-gradient(2px 2px at 300px 60px, white, rgba(255,255,255,0));
+    background-size: 350px 350px;
+    background-attachment: fixed;
     height: auto;
     min-height: 100vh;
+    color: #e0e0e0;
+}
+
+.dashboard-body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: 
+        radial-gradient(1px 1px at 45px 150px, white, rgba(255,255,255,0)),
+        radial-gradient(1.5px 1.5px at 150px 20px, white, rgba(255,255,255,0)),
+        radial-gradient(2px 2px at 290px 130px, white, rgba(255,255,255,0));
+    background-size: 300px 300px;
+    animation: twinkle 3s infinite alternate;
+    z-index: -1;
+    pointer-events: none;
+}
+
+@keyframes twinkle {
+    0% { opacity: 0.1; }
+    100% { opacity: 1; }
+}
+
+
+/* Dense, Slowly Dropping Stars Layer */
+.dashboard-body::after {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    
+    /* High count of stars generated using multiple radial gradients */
+    background-image: 
+        radial-gradient(1.5px 1.5px at 20px 30px, #ffffff, transparent),
+        radial-gradient(2px 2px at 60px 90px, rgba(0, 210, 255, 0.8), transparent),
+        radial-gradient(1px 1px at 110px 150px, #ffffff, transparent),
+        radial-gradient(1.5px 1.5px at 160px 50px, #ffffff, transparent),
+        radial-gradient(2px 2px at 210px 130px, rgba(0, 210, 255, 0.9), transparent),
+        radial-gradient(1px 1px at 250px 240px, #ffffff, transparent),
+        radial-gradient(1.5px 1.5px at 300px 80px, #ffffff, transparent),
+        radial-gradient(2px 2px at 340px 200px, #ffffff, transparent),
+        radial-gradient(1px 1px at 390px 40px, rgba(0, 210, 255, 0.7), transparent),
+        radial-gradient(1.5px 1.5px at 430px 180px, #ffffff, transparent),
+        radial-gradient(2px 2px at 480px 290px, #ffffff, transparent),
+        radial-gradient(1px 1px at 530px 120px, #ffffff, transparent);
+        
+    /* Packs them closely together so they tile across the entire screen */
+    background-size: 400px 400px;
+    
+    /* Very slow 40-second continuous drop */
+    animation: slowStarDrop 40s linear infinite; 
+    z-index: -1;
+    pointer-events: none;
+}
+
+@keyframes slowStarDrop {
+    0% { background-position: 0px 0px; }
+    100% { background-position: 400px 400px; } /* Moves diagonally down-right */
+}
+
+@keyframes shoot {
+    0% { transform: rotate(-45deg) translateX(-500px); opacity: 0; }
+    5% { opacity: 1; }
+    15% { transform: rotate(-45deg) translateX(100vw); opacity: 0; }
+    100% { transform: rotate(-45deg) translateX(100vw); opacity: 0; }
 }
 
 .navbar {
-    background-color: #ffffff;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background-color: rgba(0, 80, 200, 0.25); /* Glossy transparent blue */
+    backdrop-filter: blur(12px); 
+    -webkit-backdrop-filter: blur(12px); 
+    border-bottom: 1px solid rgba(0, 210, 255, 0.4);
+    box-shadow: 0 4px 20px rgba(0, 210, 255, 0.3);
+    
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -92,12 +171,13 @@ a {
     top: 0;
     z-index: 100;
     width: 100%;
-    transition: transform 0.3s ease-in-out; /* Smooth hide/reveal */
+    transition: transform 0.3s ease-in-out; 
 }
 
 .nav-brand h1 {
     font-size: 1.5rem;
-    color: #007bff;
+    color: #ffffff; 
+    text-shadow: 0 0 10px rgba(0, 210, 255, 0.8); /* Neon text glow */
     margin: 0;
 }
 
@@ -108,14 +188,15 @@ a {
 }
 
 .nav-links a {
-    color: #333;
+    color: #e0e0e0; 
     font-weight: 500;
     font-size: 1rem;
-    transition: color 0.3s;
+    transition: color 0.3s, text-shadow 0.3s;
 }
 
 .nav-links a:hover, .nav-links a.active {
-    color: #007bff;
+    color: #00d2ff; 
+    text-shadow: 0 0 8px rgba(0, 210, 255, 0.8);
 }
 
 .profile-icon {
@@ -166,22 +247,22 @@ a {
 }
 
 .tile {
-    background-color: #ffffff;
+    background-color: rgba(10, 15, 30, 0.75); /* Dark translucent glass */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 210, 255, 0.3);
     border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 0 10px rgba(0, 210, 255, 0.3), 0 0 20px rgba(0, 210, 255, 0.1);
     min-height: 200px;
     padding: 1.5rem;
-    transition: transform 0.3s, box-shadow 0.3s;
-    cursor: pointer;
-    border: 2px dashed #e0e0e0; /* Dashed border to show it is a placeholder */
+    transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
 }
 
 .tile:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-    border-color: #007bff;
+    box-shadow: 0 0 15px rgba(0, 210, 255, 0.8), 0 0 30px rgba(0, 210, 255, 0.5); /* Strong Neon Glow */
+    border-color: #00d2ff;
 }
-
 
 /* --- Profile Page Styles --- */
 
@@ -430,17 +511,18 @@ a {
 
 .action-bar {
     position: sticky;
-    top: 55px; /* Sits directly beneath the navbar */
+    top: 55px; 
     z-index: 99;
     
-    /* Matches the dashboard background color so it doesn't look like a tile, 
-       but hides posts scrolling underneath it */
-    background-color: #f4f7f6; /* Adjust this hex to match your exact dashboard body background color */
+    background-color: rgba(10, 15, 30, 0.8); /* Dark glass */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0, 210, 255, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 210, 255, 0.2);
     
-    padding: 10px 0; /* Removed side padding to align with posts */
+    padding: 10px 0; 
     margin-top: -10px; 
     margin-bottom: 1.5rem;
-    border: none; /* Removes any lines or box borders */
     transition: transform 0.3s ease-in-out;
 }
 
@@ -840,3 +922,32 @@ a {
 .post-sort-select:focus {
     border-color: #007bff;
 }
+
+
+
+/* --- Global Dark Mode Color Fixes --- */
+h2, h3, .post-heading, .info-value, strong {
+    color: #ffffff !important;
+}
+
+p, .post-desc, .info-label, .short-desc, span {
+    color: #b0c4de !important;
+}
+
+.post-search-bar, .post-sort-select {
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    color: white !important;
+    border: 1px solid rgba(0, 210, 255, 0.5) !important;
+}
+
+.filter-btn {
+    color: #b0c4de !important;
+    border-color: rgba(0, 210, 255, 0.5) !important;
+}
+
+.filter-btn:hover, .filter-btn.active {
+    background-color: #00d2ff !important;
+    color: #000 !important;
+    box-shadow: 0 0 10px rgba(0, 210, 255, 0.8);
+}
+
