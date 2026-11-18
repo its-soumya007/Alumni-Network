@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - SVU Alumni Connect</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="dashboard-body">
+    <!-- Top Navigation Bar -->
+    <nav class="navbar" id="top-navbar">
+        <div class="nav-brand" style="display: flex; align-items: center; gap: 12px;">
+            <img src="image_d00988.jpg" alt="SVU Logo" style="height: 45px; width: 45px; border-radius: 50%; object-fit: cover;">
+            <h1 style="margin: 0; font-size: 1.5rem;">SVU Alumni Connect</h1>
+        </div>
+        <div class="nav-links">
+            <a href="dashboard.html">Home</a>
+            <a href="chat.html">Chat</a>
+            <a href="about.html" class="active">About</a> 
+            <a href="profile.html" class="profile-icon" title="Profile" id="nav-profile-btn" style="padding: 0; overflow: hidden;">
+                <img id="nav-avatar" src="" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+                <svg id="nav-svg" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main About Content -->
+    <main class="dashboard-container" style="max-width: 800px;">
+        <div class="dashboard-header" style="text-align: center; margin-bottom: 2.5rem;">
+            <h2 style="font-size: 2rem; color: #007bff; margin-bottom: 10px;">About SVU Alumni Connect</h2>
+            <p style="font-size: 1.1rem; color: #555;">Connecting past, present, and future students of Swami Vivekananda University.</p>
+        </div>
+
+        <div class="about-sections" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            
+            <!-- Platform Overview -->
+            <div class="tile" style="padding: 2rem; cursor: default; transform: none; border: 1px solid #eaeaea;">
+                <h3 style="color: #333; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="#007bff" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    Our Mission
+                </h3>
+                <p style="color: #555; line-height: 1.6;">
+                    SVU Alumni Connect is an exclusive digital platform designed to bridge the gap between alumni and current students. Whether you are seeking career guidance, looking to refer a talented junior, or just want to catch up with old classmates, this portal provides a secure and intuitive environment to build valuable professional connections.
+                </p>
+            </div>
+
+            <!-- Features -->
+            <div class="tile" style="padding: 2rem; cursor: default; transform: none; border: 1px solid #eaeaea;">
+                <h3 style="color: #333; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="#007bff" stroke-width="2" fill="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    Platform Features
+                </h3>
+                <ul style="color: #555; line-height: 1.8; padding-left: 20px;">
+                    <li><strong>Community Feed:</strong> Explore and filter through detailed reference opportunities and company reviews posted directly by SVU alumni.</li>
+                    <li><strong>Real-Time 1-to-1 Chat:</strong> Instantly connect with mentors, peers, and alumni with our WhatsApp-style fast messaging system.</li>
+                    <li><strong>Alumni Directory & Search:</strong> Quickly find alumni profiles, complete with their current company and professional designation.</li>
+                    <li><strong>Interactive Engagement:</strong> Like posts, view detailed image attachments, and track your most recent conversations seamlessly.</li>
+                </ul>
+            </div>
+
+            <!-- Contact & Support -->
+            <div class="tile" style="padding: 2rem; cursor: default; transform: none; border: 1px solid #eaeaea;">
+                <h3 style="color: #333; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="#007bff" stroke-width="2" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    Contact Support
+                </h3>
+                <p style="color: #555; line-height: 1.6; margin-bottom: 15px;">
+                    Having trouble with your account, spotted a bug, or have a feature request? Reach out to the development and support team directly. We are always looking to improve the network.
+                </p>
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-weight: bold; color: #333;">Email us at:</span>
+                    <a href="mailto:soumyawork007@gmail.com" style="color: #007bff; font-weight: 500; font-size: 1.1rem; text-decoration: none;">soumyawork007@gmail.com</a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Initialize Supabase to ensure the user is logged in and their avatar loads on the navbar
+        const SUPABASE_URL = 'https://nklrpamkpcmrdyeqnjic.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_jbRlcZEhvMcvOnSGOWrzyw_emTnaE9w';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function initAuth() {
+            const { data: { user }, error } = await supabaseClient.auth.getUser();
+            if (error || !user) {
+                window.location.replace('login.html');
+                return;
+            }
+
+            // Load nav avatar
+            const { data: profile } = await supabaseClient.from('profiles').select('avatar_url').eq('id', user.id).single();
+            if (profile && profile.avatar_url) {
+                document.getElementById('nav-avatar').src = profile.avatar_url;
+                document.getElementById('nav-avatar').style.display = 'block';
+                document.getElementById('nav-svg').style.display = 'none';
+                document.getElementById('nav-profile-btn').style.backgroundColor = 'transparent';
+            }
+        }
+
+        initAuth();
+    </script>
+</body>
+</html>

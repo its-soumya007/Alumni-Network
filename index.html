@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVU Alumni Connect - Login</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* Full-page split layout over the starry background */
+        body.dashboard-body {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            min-height: 100vh !important;
+            height: auto !important;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        .auth-split-wrapper {
+            display: flex;
+            align-items: stretch;
+            justify-content: space-between;
+            gap: 2.5rem;
+            width: 100%;
+            max-width: 1300px;
+            z-index: 1;
+        }
+
+        /* ================= LEFT SIDE: TICKER + SLIDER + DESCRIPTION ================= */
+        .left-showcase {
+            flex: 1.4;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            min-width: 0;
+        }
+
+        /* 1. Running Heading Ticker */
+        .ticker-wrapper {
+            display: flex;
+            align-items: center;
+            background-color: rgba(10, 15, 30, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 210, 255, 0.45);
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.25);
+            border-radius: 30px;
+            overflow: hidden;
+            height: 46px;
+        }
+
+        .ticker-label {
+            background: linear-gradient(90deg, #007bff, #00d2ff);
+            color: #02040a !important;
+            font-weight: 800;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            padding: 0 16px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            text-transform: uppercase;
+            z-index: 2;
+        }
+
+        .ticker-track {
+            flex: 1;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .ticker-content {
+            display: inline-block;
+            padding-left: 100%;
+            color: #e0f2fe !important;
+            font-size: 0.95rem;
+            font-weight: 500;
+            animation: runTicker 24s linear infinite;
+        }
+
+        .ticker-wrapper:hover .ticker-content {
+            animation-play-state: paused;
+        }
+
+        .ticker-highlight {
+            color: #00d2ff !important;
+            font-weight: 700;
+        }
+
+        @keyframes runTicker {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* 2. Auto-Sliding Campus Image Carousel */
+        .slider-box {
+            position: relative;
+            width: 100%;
+            height: 360px;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 210, 255, 0.4);
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.25);
+            background-color: rgba(10, 15, 30, 0.8);
+        }
+
+        .slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 0.9s ease-in-out;
+        }
+
+        .slide.active {
+            opacity: 1;
+        }
+
+        .slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .slide-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px 20px 32px;
+            background: linear-gradient(transparent, rgba(2, 4, 10, 0.88));
+            color: #ffffff !important;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .slider-dots {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 3;
+        }
+
+        .slider-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            transition: background 0.3s, transform 0.3s;
+        }
+
+        .slider-dot.active {
+            background: #00d2ff;
+            box-shadow: 0 0 8px #00d2ff;
+            transform: scale(1.2);
+        }
+
+        /* 3. Short College Description */
+        .college-desc-card {
+            background-color: rgba(10, 15, 30, 0.75);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.2);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+        }
+
+        .college-desc-card h3 {
+            color: #00d2ff !important;
+            margin-bottom: 8px;
+            font-size: 1.15rem;
+            text-shadow: 0 0 8px rgba(0, 210, 255, 0.4);
+        }
+
+        .college-desc-card p {
+            text-align: left;
+            margin-top: 0;
+            color: #cbd5e1 !important;
+            font-size: 0.92rem;
+            line-height: 1.6;
+        }
+
+        /* ================= RIGHT SIDE: LOGIN / REGISTER CARD ================= */
+        .right-auth {
+            flex: 0.9;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .container {
+            background-color: rgba(10, 15, 30, 0.8) !important;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 210, 255, 0.35) !important;
+            box-shadow: 0 0 25px rgba(0, 210, 255, 0.25) !important;
+            color: #ffffff;
+            width: 100%;
+            max-width: 420px;
+            margin: 0;
+        }
+
+        form input, form select {
+            background-color: rgba(0, 0, 0, 0.55) !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(0, 210, 255, 0.5) !important;
+            outline: none;
+            transition: box-shadow 0.3s, border-color 0.3s;
+        }
+
+        /* Prevent Chrome autofill from turning dark inputs white */
+        form input:-webkit-autofill,
+        form input:-webkit-autofill:hover,
+        form input:-webkit-autofill:focus {
+            -webkit-box-shadow: 0 0 0 30px #091122 inset !important;
+            -webkit-text-fill-color: #ffffff !important;
+        }
+
+        form input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        form input:focus, form select:focus {
+            box-shadow: inset 0 0 8px rgba(0, 210, 255, 0.5);
+            border-color: #00d2ff !important;
+        }
+
+        form button[type="submit"] {
+            background-color: #00d2ff !important;
+            color: #02040a !important;
+            border: 1px solid #00d2ff !important;
+            box-shadow: 0 0 12px rgba(0, 210, 255, 0.5);
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        form button[type="submit"]:hover {
+            background-color: #ffffff !important;
+            border-color: #ffffff !important;
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.85);
+        }
+
+        /* Secondary Register / Login Switch Button */
+        .switch-auth-btn {
+            width: 100%;
+            margin-top: 12px;
+            background-color: rgba(0, 210, 255, 0.12) !important;
+            color: #00d2ff !important;
+            border: 1px solid rgba(0, 210, 255, 0.6) !important;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .switch-auth-btn:hover {
+            background-color: rgba(0, 210, 255, 0.25) !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 12px rgba(0, 210, 255, 0.5);
+        }
+
+        .auth-divider {
+            text-align: center;
+            color: #94a3b8 !important;
+            font-size: 0.85rem;
+            margin-top: 16px;
+            margin-bottom: 4px;
+        }
+
+        select option {
+            background-color: #02040a;
+            color: white;
+        }
+
+        /* Responsive stacking for tablets & mobile */
+        @media (max-width: 960px) {
+            .auth-split-wrapper {
+                flex-direction: column-reverse;
+                gap: 1.5rem;
+            }
+            .right-auth {
+                justify-content: center;
+            }
+            .slider-box {
+                height: 260px;
+            }
+        }
+    </style>
+</head>
+
+<body class="dashboard-body">
+    <div class="auth-split-wrapper">
+
+        <!-- LEFT SIDE: Running Post Ticker, Auto Shuffling Image Slider, College Description -->
+        <div class="left-showcase">
+
+            <!-- 1. Running Heading of Latest Posts -->
+            <div class="ticker-wrapper">
+                <span class="ticker-label">Latest Buzz</span>
+                <div class="ticker-track">
+                    <div class="ticker-content" id="live-post-ticker">
+                        Loading latest alumni posts and updates...
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Automatic Shuffling Image Slider (Loads from Supabase 'slider_images' bucket) -->
+            <div class="slider-box" id="campus-slider">
+                <div class="slide active">
+                    <img src="image_1eeac6.jpg" alt="SVU Main Campus">
+                    <div class="slide-caption">Swami Vivekananda University — Main Campus</div>
+                </div>
+                <div class="slider-dots" id="slider-dots"></div>
+            </div>
+
+            <!-- 3. Short College Description -->
+            <div class="college-desc-card">
+                <h3>About Swami Vivekananda University (SVU)</h3>
+                <p>
+                    Swami Vivekananda University is committed to academic excellence, innovation, and career-focused
+                    education across Engineering, Management, Science, and Humanities. SVU Alumni Connect bridges
+                    students and graduates—enabling direct job referrals, real company reviews, and 1-on-1 mentorship.
+                </p>
+            </div>
+
+        </div>
+
+        <!-- RIGHT SIDE: Login (Default) & Register Card -->
+        <div class="right-auth">
+            <div class="container">
+
+                <!-- Branding Header -->
+                <div class="brand-header" style="text-align: center; margin-bottom: 22px;">
+                    <img src="image_d00988.jpg" alt="SVU Logo" style="height: 76px; width: 76px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; box-shadow: 0 0 15px rgba(0, 210, 255, 0.5); border: 2px solid rgba(0, 210, 255, 0.3);">
+                    <h1 style="margin: 0; font-size: 1.55rem; color: #ffffff; text-shadow: 0 0 10px rgba(0, 210, 255, 0.8);">SVU Alumni Connect</h1>
+                </div>
+
+                <!-- Login Section (Visible First) -->
+                <div id="login-section" class="form-section">
+                    <h2 style="text-align: center; margin-bottom: 18px; color: #00d2ff; text-shadow: 0 0 8px rgba(0, 210, 255, 0.4);">Login</h2>
+                    <form id="login-form">
+                        <input type="text" id="login-identifier" placeholder="Email or Username" required>
+                        <input type="password" id="login-password" placeholder="Password" required>
+                        <button type="submit">Sign In</button>
+                    </form>
+                    <p class="auth-divider">New to SVU Alumni Connect?</p>
+                    <button type="button" id="show-register" class="switch-auth-btn">Register</button>
+                </div>
+
+                <!-- Register Section (Hidden by Default) -->
+                <div id="register-section" class="form-section hidden">
+                    <h2 style="text-align: center; margin-bottom: 18px; color: #00d2ff; text-shadow: 0 0 8px rgba(0, 210, 255, 0.4);">Register</h2>
+                    <form id="register-form">
+                        <select id="reg-role" required>
+                            <option value="" disabled selected>Select Role</option>
+                            <option value="Student">Student</option>
+                            <option value="Alumni">Alumni</option>
+                        </select>
+                        <input type="text" id="reg-name" placeholder="Full Name" required>
+                        <input type="email" id="reg-email" placeholder="Email Address" required>
+                        <input type="text" id="reg-username" placeholder="Unique Username" required>
+                        <input type="password" id="reg-password" placeholder="Password" required>
+                        <input type="password" id="reg-confirm-password" placeholder="Confirm Password" required>
+                        <button type="submit">Sign Up</button>
+                    </form>
+                    <p class="auth-divider">Already have an account?</p>
+                    <button type="button" id="show-login" class="switch-auth-btn">Back to Login</button>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Existing Auth Script -->
+    <script src="app.js"></script>
+
+    <!-- Auto-Fetch, Shuffle Slider & Live Post Ticker Script -->
+    <script>
+        (async function () {
+            const publicClient = window.supabase.createClient(
+                'https://nklrpamkpcmrdyeqnjic.supabase.co',
+                'sb_publishable_jbRlcZEhvMcvOnSGOWrzyw_emTnaE9w'
+            );
+
+            // Fisher-Yates Shuffle
+            function shuffleArray(arr) {
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
+                return arr;
+            }
+
+            // 1. Load & Shuffle Slider Photos from Supabase Storage ('slider_images')
+            async function initAutoSlider() {
+                const sliderBox = document.getElementById('campus-slider');
+                const { data: files, error } = await publicClient.storage
+                    .from('slider_images')
+                    .list('', { limit: 100 });
+
+                // Filter to valid image files only
+                const imageFiles = (!error && files)
+                    ? files.filter(f => /\.(jpg|jpeg|png|webp|gif)$/i.test(f.name))
+                    : [];
+
+                // If bucket has images, shuffle and build slides; otherwise keep fallback image
+                if (imageFiles.length > 0) {
+                    shuffleArray(imageFiles);
+
+                    const slidesHTML = imageFiles.map((file, idx) => {
+                        const { data } = publicClient.storage
+                            .from('slider_images')
+                            .getPublicUrl(file.name);
+
+                        // Turn filename like "SVU_Main_Gate.jpg" into "SVU Main Gate"
+                        const caption = file.name
+                            .replace(/\.[^/.]+$/, '')
+                            .replace(/[_-]+/g, ' ');
+
+                        return `
+                            <div class="slide ${idx === 0 ? 'active' : ''}">
+                                <img src="${data.publicUrl}" alt="${caption}">
+                                <div class="slide-caption">${caption}</div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    const dotsHTML = imageFiles.map((_, idx) =>
+                        `<span class="slider-dot ${idx === 0 ? 'active' : ''}" data-index="${idx}"></span>`
+                    ).join('');
+
+                    sliderBox.innerHTML = `${slidesHTML}<div class="slider-dots" id="slider-dots">${dotsHTML}</div>`;
+                }
+
+                // Start automatic transitions if there is more than 1 slide
+                const slides = sliderBox.querySelectorAll('.slide');
+                const dots = sliderBox.querySelectorAll('.slider-dot');
+                if (slides.length <= 1) return;
+
+                let currentSlide = 0;
+
+                function showSlide(index) {
+                    slides.forEach((s, i) => s.classList.toggle('active', i === index));
+                    dots.forEach((d, i) => d.classList.toggle('active', i === index));
+                    currentSlide = index;
+                }
+
+                let slideTimer = setInterval(() => {
+                    showSlide((currentSlide + 1) % slides.length);
+                }, 3500);
+
+                dots.forEach(dot => {
+                    dot.addEventListener('click', () => {
+                        clearInterval(slideTimer);
+                        showSlide(Number(dot.dataset.index));
+                        slideTimer = setInterval(() => {
+                            showSlide((currentSlide + 1) % slides.length);
+                        }, 3500);
+                    });
+                });
+            }
+
+            // 2. Fetch Latest Posts for the Running Heading Ticker
+            async function initPostTicker() {
+                const tickerEl = document.getElementById('live-post-ticker');
+                try {
+                    const { data: recentPosts, error } = await publicClient
+                        .from('posts')
+                        .select('heading, post_type, profiles!posts_author_id_fkey(full_name)')
+                        .order('created_at', { ascending: false })
+                        .limit(5);
+
+                    if (!error && recentPosts && recentPosts.length > 0) {
+                        const items = recentPosts.map(p => {
+                            const authorName = p.profiles ? p.profiles.full_name : 'An Alumni';
+                            return `<span class="ticker-highlight">${authorName}</span> posted a new ${p.post_type}: "${p.heading}"`;
+                        });
+                        tickerEl.innerHTML = items.join('&nbsp;&nbsp;&nbsp;★&nbsp;&nbsp;&nbsp;');
+                    } else {
+                        tickerEl.innerHTML = 'Welcome to <span class="ticker-highlight">SVU Alumni Connect</span> — Login to view new References, Reviews, and connect with Alumni!';
+                    }
+                } catch (err) {
+                    tickerEl.innerHTML = 'Welcome to <span class="ticker-highlight">SVU Alumni Connect</span> — Stay connected with SVU Students & Alumni!';
+                }
+            }
+
+            initAutoSlider();
+            initPostTicker();
+        })();
+    </script>
+</body>
+
+</html>
